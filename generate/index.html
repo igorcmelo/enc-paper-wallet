@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nano Secure Paper Wallet Generator</title>
+  <link rel="stylesheet" href="/assets/css/global.css">
+  <script defer src="/assets/js/aes.js"></script>
+  <script defer src="/assets/js/nanocurrency.js"></script>
+  <script defer src="/assets/js/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="fields">
+    <input id="pass" type="password" placeholder="Password">
+    <button onclick="generate()">Generate paper wallet</button>
+  </div>
+
+  <div class="wallet" style="display: none">
+    <div class="enc-mnemonic">
+      <h3>Encrypted mnemonic</h3>
+      <div class="qr enc-mnemonic__qr"></div>
+      <p class="enc-mnemonic__txt"></p>
+    </div>
+    <div class="address">
+      <h3>Public address</h3>
+      <div class="qr address__qr"></div>
+      <p class="address__txt"></p>
+    </div>
+  </div>
+
+  <script>
+    const $ = document.querySelector.bind(document)
+
+    const enc = (text, pass) => 
+      CryptoJS.AES.encrypt(text, pass).toString()
+
+    function generate() {
+      let password = $("#pass").value
+      // let password = prompt("Choose the password for protecting your seed")
+      let w = NanocurrencyWeb.wallet.generateLegacy()
+      let encrypted = enc(w.mnemonic, password)
+  
+  
+      new QRCode($(".enc-mnemonic__qr"), encrypted)
+      $('.enc-mnemonic__txt').innerHTML = encrypted
+  
+      new QRCode($(".address__qr"), w.accounts[0].address)
+      $('.address__txt').innerHTML = w.accounts[0].address
+
+      $('.fields').style.display = 'none'
+      $('.wallet').style.display = 'flex'
+    }
+  </script>
+
+  <style>
+    body {
+      height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    .wallet {
+      width: 800px;
+      height: 500px;
+      padding: 3rem 4rem;
+      display: flex;
+      justify-content: space-between;
+      border: 2px dashed black;
+    }
+
+    .enc-mnemonic__txt {
+      font-size: 1.4rem;
+    }
+
+    .address__txt {
+      font-size: 1.7rem;
+    }
+
+    .enc-mnemonic__txt, .address__txt {
+      font-family: monospace;
+      overflow-wrap: break-word;
+      margin: 2rem 0;
+    }
+
+    .enc-mnemonic, .address {
+      width: calc(256px + 2rem);
+      height: auto; 
+    }
+
+    .qr {
+      padding: 1rem;
+      background-color: white;
+      border: 1px solid black;
+    }
+  </style>
+</body>
+</html>

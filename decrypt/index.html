@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/assets/css/global.css">
+  <title>Document</title>
+  <script defer src="/assets/js/aes.js"></script>
+  <script defer src="/assets/js/instascan.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <p>Encrypted mnemonic:</p>
+    <div>
+      <input type="text" id="encMnemonic"> 
+      <input type="button" value="Scan QR" onclick="scan()">
+    </div>
+
+    <p>Password:</p> 
+    <div>
+      <input type="password" id="password">
+      <input type="button" value="Decrypt" onclick="decrypt()">
+    </div>    
+
+    <video id="preview"></video>
+    
+    <p>Mnemonic:</p>
+    <textarea 
+      id="textArea" 
+      placeholder="Your decrypted mnemonic shows here"
+      rows="5"
+    ></textarea>
+  </div>
+
+  <script>
+    preview.style.display = 'none';
+
+    function decrypt() {
+      let bytes = CryptoJS.AES.decrypt(encMnemonic.value, password.value)
+      let mnemonic = bytes.toString(CryptoJS.enc.Utf8)
+      textArea.value = mnemonic
+    }
+
+    function scan() {
+      preview.style.display = 'block';
+      let scanner = new Instascan.Scanner({ video: preview })
+      scanner.addListener('scan', (content) => {
+        scanner.stop()
+        encMnemonic.value = content
+        preview.style.display = 'none';
+      })
+
+      Instascan.Camera.getCameras().then((cams) => {
+        scanner.start(cams[0])
+      })
+    }
+  </script>
+
+  <style>
+    body {
+      height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+
+    .container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: 350px;
+    }
+
+    .container div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .container > * + * {
+      margin-top: 1rem;
+    }
+
+    textarea {
+      padding: 1rem;
+    }
+
+    #preview {
+      height: 300px;
+      position: absolute;
+    }
+  </style>
+</body>
+</html>
