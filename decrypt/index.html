@@ -7,39 +7,58 @@
   <link rel="stylesheet" href="../assets/css/global.css">
   <title>Document</title>
   <script defer src="../assets/js/aes.js"></script>
+  <script defer src="../assets/js/nanocurrency.js"></script>
   <script defer src="../assets/js/instascan.min.js"></script>
 </head>
 <body>
   <div class="container">
     <p>Encrypted mnemonic:</p>
     <div>
-      <input type="text" id="encMnemonic"> 
+      <input type="text" id="encSeed"> 
       <input type="button" value="Scan QR" onclick="scan()">
     </div>
 
     <p>Password:</p> 
     <div>
-      <input type="password" id="password">
+      <input type="password" id="pass">
       <input type="button" value="Decrypt" onclick="decrypt()">
     </div>    
 
     <video id="preview"></video>
-    
+    <hr>
+    <p>Seed:</p>
+    <input type="text" id="seedInput">
+
     <p>Mnemonic:</p>
     <textarea 
-      id="textArea" 
+      id="mnemonicArea" 
       placeholder="Your decrypted mnemonic shows here"
       rows="5"
     ></textarea>
+
+    <p>Address:</p>
+    <input type="text" id="addressInput">
   </div>
 
   <script>
     preview.style.display = 'none';
 
+    function walletFromSeed(seed) {
+      if (seed.length == 64)
+        return NanocurrencyWeb.wallet.fromLegacySeed(seed)
+      else if (seed.split(' ').length == 24)
+        return NanocurrencyWeb.wallet.fromLegacyMnemonic(seed)
+    }
+
     function decrypt() {
-      let bytes = CryptoJS.AES.decrypt(encMnemonic.value, password.value)
-      let mnemonic = bytes.toString(CryptoJS.enc.Utf8)
-      textArea.value = mnemonic
+      let bytes = CryptoJS.AES.decrypt(encSeed.value, pass.value)
+      let seed = bytes.toString(CryptoJS.enc.Utf8)
+
+      let wallet = walletFromSeed(seed)
+
+      seedInput.value = wallet.seed
+      mnemonicArea.value = wallet.mnemonic
+      addressInput.value = wallet.accounts[0].address
     }
 
     function scan() {
@@ -47,7 +66,7 @@
       let scanner = new Instascan.Scanner({ video: preview })
       scanner.addListener('scan', (content) => {
         scanner.stop()
-        encMnemonic.value = content
+        encSeed.value = content
         preview.style.display = 'none';
       })
 
@@ -68,7 +87,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      width: 350px;
+      width: 400px;
     }
 
     .container div {
@@ -77,10 +96,10 @@
     }
 
     .container > * + * {
-      margin-top: 1rem;
+      margin-top: .7rem;
     }
 
-    textarea {
+    mnemonicArea {
       padding: 1rem;
     }
 

@@ -13,7 +13,12 @@
 <body>
   <div class="fields">
     <input id="pass" type="password" placeholder="Password">
-    <button onclick="generate()">Generate paper wallet</button>
+    <input id="seed" type="password" placeholder="Seed / Mnemonic seed" disabled>
+
+    <div>
+      <input id="checkbox" type="checkbox" onchange="checkboxChange(this)" checked> Generate random seed
+      <button onclick="generate()">Generate paper wallet</button>
+    </div>
   </div>
 
   <div class="wallet" style="display: none">
@@ -32,24 +37,40 @@
   <script>
     const $ = document.querySelector.bind(document)
 
-    const enc = (text, pass) => 
-      CryptoJS.AES.encrypt(text, pass).toString()
+    function walletFromSeed(seed) {
+      if (seed.length == 64)
+        return NanocurrencyWeb.wallet.fromLegacySeed(seed)
+      else if (seed.split(' ').length == 24)
+        return NanocurrencyWeb.wallet.fromLegacyMnemonic(seed)
+    }
 
     function generate() {
-      let password = $("#pass").value
-      // let password = prompt("Choose the password for protecting your seed")
-      let w = NanocurrencyWeb.wallet.generateLegacy()
-      let encrypted = enc(w.mnemonic, password)
-  
-  
+      let password = pass.value
+      let wallet
+      if (checkbox.checked)
+        wallet = NanocurrencyWeb.wallet.generateLegacy()
+      else
+        wallet = walletFromSeed(seed.value)
+
+      console.log(password)
+      renderPaperWallet(wallet, password)
+    }
+
+    function renderPaperWallet(wallet, password) {
+      let encrypted = CryptoJS.AES.encrypt(wallet.mnemonic, password).toString()
+
       new QRCode($(".enc-mnemonic__qr"), encrypted)
       $('.enc-mnemonic__txt').innerHTML = encrypted
   
-      new QRCode($(".address__qr"), w.accounts[0].address)
-      $('.address__txt').innerHTML = w.accounts[0].address
+      new QRCode($(".address__qr"), wallet.accounts[0].address)
+      $('.address__txt').innerHTML = wallet.accounts[0].address
 
       $('.fields').style.display = 'none'
       $('.wallet').style.display = 'flex'
+    }
+
+    function checkboxChange(checkbox) {
+      $("#seed").disabled = checkbox.checked      
     }
   </script>
 
@@ -58,6 +79,15 @@
       height: 100vh;
       display: grid;
       place-items: center;
+    }
+
+    .fields {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fields > * + * {
+      margin-top: 1rem;
     }
 
     .wallet {
